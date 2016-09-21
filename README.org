@@ -386,6 +386,12 @@ BTW，Sikuli 的发明人，[[http://vgod.tw/][vgod]]，台湾人，MIT PHD，�
 
 ** 使用
 
+使用方法？教程？如果你看了上面我写的文字一头雾水，我劝你还是放弃吧，别折腾了；如果你能看懂 50%，相信你已经知道使用方法了，记得修改下 `urls` 参数，别折腾了半天，最后帖子顶到我这边，为我做嫁；如果你实在是想用这个方案自己又搞不定，欢迎发邮件给我进行付费咨询，喵。
+
+我个人在本机的使用效果：
+
+[[/images/douban-group-dingbot-result.png]]
+
 # Local Variables:
 # eval: (auto-fill-mode -1)
 # End:
