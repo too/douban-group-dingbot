@@ -65,7 +65,7 @@
 
 上面的都是小问题，最大的问题还是验证码的问题。因此后端脚本在每次运行后就会退出，因此每次运行时都需要重新登录并建立新的 HTTP session，这很容易触发豆瓣登录的验证码。而验证码识别需要 Computer Vision 领域相关的知识，这方面我所知甚少。[[https://t-y.me/p/233][这里]]和[[https://t-y.me/p/247][这里]]是两篇很好的文章，详细阐述了豆瓣验证码的程序化识别方法。我看了下，不是很难，个人花些时间的话，也可以完成。但是用 Computer Vision 的手段来“顶帖”，还是有些牛刀杀鸡之感，因此最终放弃了这个思路。
 
-附上我最开始写的 Python 程序，包含豆瓣登录、建立 HTTP session、用正则表达式提取一些表单信息。
+附上我最开始写的 Python 程序（需要 ~pip install requests~ ），包含豆瓣登录、建立 HTTP session、用正则表达式提取一些表单信息。
 
 #+BEGIN_SRC python
 import random
@@ -118,7 +118,238 @@ if __name__ == '__main__':
 
 *** 前端 iframe
 
+第二种方式是通过前端页面嵌入 ~iframe~ ，然后通过 JavaScipt 修改 ~iframe src~ 来实现自动加载不同的页面。
+
+#+BEGIN_SRC html
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
+    <meta content="width=1300, maximum-scale=2, user-scalable=yes" name="viewport" />
+    <title>Douban-bot</title>
+  </head>
+
+  <body>
+    <iframe id="douban-group" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" src="" width="1200" height="800">
+      <p>Your browser does not support iframes.</p>
+    </iframe>
+  </body>
+
+  <script>
+   (function () {
+     // Returns a random integer between min (included) and max (excluded)
+     // Using Math.round() will give you a non-uniform distribution!
+     function random_int (min, max) {
+       min = Math.ceil(min);
+       max = Math.floor(max);
+       return Math.floor(Math.random() * (max - min)) + min;
+     }
+
+     var urls = ["https://www.douban.com/group/topic/90845242/",
+                 "https://www.douban.com/group/topic/90845094/",
+                 "https://www.douban.com/group/topic/90845036/",
+                 "https://www.douban.com/group/topic/90844973/",
+                 "https://www.douban.com/group/topic/90844873/",
+                 "https://www.douban.com/group/topic/90844341/",
+                 "https://www.douban.com/group/topic/90844012/",
+                 "https://www.douban.com/group/topic/90841110/",
+                 "https://www.douban.com/group/topic/90840593/",
+                 "https://www.douban.com/group/topic/90840457/",
+                 "https://www.douban.com/group/topic/90840401/",
+                 "https://www.douban.com/group/topic/90840340/",
+                 "https://www.douban.com/group/topic/90840228/",
+                 "https://www.douban.com/group/topic/90840096/",
+                 "https://www.douban.com/group/topic/90839736/",
+                 "https://www.douban.com/group/topic/90839654/"];
+
+     var douban_iframe = document.getElementById('douban-group');
+
+     douban_iframe.setAttribute('src', urls[random_int(0, urls.length)]);
+   })();
+  </script>
+
+</html>
+#+END_SRC
+
+但是程序写到后面我发现我犯了了致命的错误……
+
+我最初的想法是通过 ~iframe~ 加载豆瓣的页面后，通过 JavaScript 来获取 ~iframe~ 内部豆瓣页面上的元素，并进行模拟人工的发帖操作。
+
+但这实际上是行不通的。为了安全起见，浏览器默认会禁止跨域请求，所以 iframe 外部的 JavaScript 是无法解析 iframe 内部页面的 DOM 元素的。最终这种方法宣告失败。浏览器与 iframe 之间进行跨域通信的方法似乎只有 [[http://blog.teamtreehouse.com/cross-domain-messaging-with-postmessage][postMessage]] 这一种方法。限于时间和篇幅，不再详述细节。
+
 *** 前端浏览器插件
+
+前两种方法基本上都宣告失败，此时我已经耗了大半天的时间，本已想放弃。灵光突现，忽然想起很久很久很久以前 Firefox 3.x 时候有个备受推崇的插件：[[https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/][Greasemonkey]]。可惜我当时对计算机程序所知甚少，完全不懂 Web/HTTP/HTML/JavaScript，因此只是简单看了下这个插件，就没有再关注过了。
+
+这次忽然想起，很多浏览器的插件其实也就是一些 JavaScript 脚本，而 Greasemonkey 其实就是个用户端可以自定义的 JavaScript 脚本管理器。通过 Greasemonkey 加上一些自定义脚本，用户几乎可以在客户端对页面做任何事情：
+- 屏蔽网站广告
+- 发送网页布局
+- 替换字体
+- 增强视频播放器
+
+[[http://userscripts-mirror.org/]] 汇集了大量的用户脚本，包罗万象。
+
+Greasemonkey 在 Chrome 浏览器中对应的插件是 [[https://tampermonkey.net][Tampermonkey]] 。
+
+以此为基础，花了大概三、四个小时，完成了下面的 JavaScript 脚本：
+
+#+BEGIN_SRC javascript
+// ==UserScript==
+// @name         Douban Group Dingbot
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Douban Group topics auto comments.
+// @author       You
+// @match        https://www.douban.com/group/topic/*
+// @grant        window.close
+// ==/UserScript==
+
+(function() {
+  'use strict';
+
+  function random_int (min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  var topic = 'PPResume';
+  var title = document.getElementsByTagName('h1')[0].textContent;
+  var is_ppresume_topic = (title.toUpperCase().indexOf(topic.toUpperCase()) == -1 ? false : true);
+
+  if (! is_ppresume_topic) {
+    console.log("This is not a " + topic + " topic, you've made a wrong choice, my master...");
+    return;
+  }
+
+  var words = ['喵', '汪', '嗷', '咩', '哞', '呱',
+               '吱', '喔', '叽', '嗡', '咿', '嘶',
+               '喳', '嘎', '咕', '哇', '呜', '嗥'];
+
+  var has_captcha = document.getElementById('captcha_image');
+  if (has_captcha) {
+    console.log("This page has captcha image, I can't post for you, master, sorry...");
+    return;
+  }
+  var textarea = document.querySelector('textarea[id=last]');
+  if (! textarea) {
+    console.log("You've just posted a comment already, I'll close the window and exit...");
+    setTimeout(function () { window.close(); }, 3000);
+    return;
+  }
+
+  textarea.innerHTML = words[random_int(0, words.length)];
+
+  var submit_button = document.querySelector('input[name=submit_btn]');
+  submit_button.click();
+})();
+#+END_SRC
+
+脚本的开头有 Tampermonkey 相关的注释：
+- ~// @match        https://www.douban.com/group/topic/*~
+  - 此行表示只有就浏览器访问 ~https://www.douban.com/group/topic/~ 开头的网址，才会触发脚本
+- ~// @grant        window.close~
+  - 此行表示授权脚本关闭浏览器窗口或者标签的权力 ~window.close()~ ，这样程序在完成顶帖工作后，可以自行关闭窗口，不会对用户的日常工作有太大的干扰。
+
+整个程序核心只有约 30 行左右，非常简单，逻辑也不复杂，除了回帖功能，程序中还加了一些额外的检测：
+- 根据话题的 title 是否包含特定字条，来确定此话题是否需要顶帖
+- 根据页面结构判断此话题是否刚刚被顶过
+- 判断页面是否包含验证码，如包含验证码，则直接退出。
+
+这样写完之后，将脚本安装到 Tampermonkey，然后每次访问特定的豆瓣小组话题页面时，就会触发自动回帖操作。当然，频率不要太高，要不会触发豆瓣的验证码。剩下的问题是，如何让浏览器来定时访问特定的豆瓣页面。
+
+这个很简单。现代操作系统都有定时任务的支持。基于 Unix 的系统，如 Linux 或者 macOS，有一个经典的定时任务工具，[[https://en.wikipedia.org/wiki/Cron][Cron]]，写一个简单的脚本，放入 crontab 即可。我用 ruby 写的脚本如下：
+
+#+BEGIN_SRC ruby
+#!/usr/bin/env ruby
+
+def main
+  urls = ["https://www.douban.com/group/topic/90845242/",
+          "https://www.douban.com/group/topic/90845094/",
+          "https://www.douban.com/group/topic/90845036/",
+          "https://www.douban.com/group/topic/90844973/",
+          "https://www.douban.com/group/topic/90844873/",
+          "https://www.douban.com/group/topic/90844341/",
+          "https://www.douban.com/group/topic/90844012/",
+          "https://www.douban.com/group/topic/90841110/",
+          "https://www.douban.com/group/topic/90840593/",
+          "https://www.douban.com/group/topic/90840457/",
+          "https://www.douban.com/group/topic/90840401/",
+          "https://www.douban.com/group/topic/90840340/",
+          "https://www.douban.com/group/topic/90840228/",
+          "https://www.douban.com/group/topic/90840096/",
+          "https://www.douban.com/group/topic/90839736/",
+          "https://www.douban.com/group/topic/90839654/"];
+
+  rand_url = urls[rand(urls.length)]
+
+  sleep_seconds = rand(1000)
+  puts "Sleep #{sleep_seconds} for a while."
+  sleep(sleep_seconds)
+
+  case RUBY_PLATFORM
+  when /darwin/
+    `open #{rand_url}`
+  when /linux/
+    `xdg-open #{rand_url}`
+  end
+end
+
+if __FILE__ == $0
+  main
+end
+#+END_SRC
+
+我的 crontab 设置是 ~52 8-23 * * * /usr/bin/ruby /Users/xiao/work/xiaohanyu/douban-group-dingbot/douban-group-dingbot.rb~ ，这表示在每天 8:00--23:00，每个小时第 52 分钟的时候，运行 ruby 脚本。实际上，我的 ruby 脚本中还加入了一些随机化的 ~sleep~ ，因此实际的回帖时间并不是每个小时的第 52 分钟，而是随机性的。这样可以更好地避开豆瓣的验证码限制，真正的 Behave like a human。
+
+除了用定时任务定时触发，还可以通过 Tampermonkey 进行手工触发。脚本如下：
+
+#+BEGIN_SRC javascript
+// ==UserScript==
+// @name         Douban Group Dingbot Helper
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  Douban Group topics auto comments.
+// @author       You
+// @match        https://www.douban.com/dingbot
+// @grant        none
+// ==/UserScript==
+
+(function() {
+  'use strict';
+
+  function random_int (min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+
+  var urls = ["https://www.douban.com/group/topic/90845242/",
+              "https://www.douban.com/group/topic/90845094/",
+              "https://www.douban.com/group/topic/90845036/",
+              "https://www.douban.com/group/topic/90844973/",
+              "https://www.douban.com/group/topic/90844873/",
+              "https://www.douban.com/group/topic/90844341/",
+              "https://www.douban.com/group/topic/90844012/",
+              "https://www.douban.com/group/topic/90841110/",
+              "https://www.douban.com/group/topic/90840593/",
+              "https://www.douban.com/group/topic/90840457/",
+              "https://www.douban.com/group/topic/90840401/",
+              "https://www.douban.com/group/topic/90840340/",
+              "https://www.douban.com/group/topic/90840228/",
+              "https://www.douban.com/group/topic/90840096/",
+              "https://www.douban.com/group/topic/90839736/",
+              "https://www.douban.com/group/topic/90839654/"];
+
+  window.location.href = urls[random_int(0, urls.length)];
+})();
+#+END_SRC
+
+注意脚本开头的注释： ~// @match        https://www.douban.com/dingbot~ 。这表示，当浏览器访问 ~http://www.douban.com/dingbot~ 时，会触发这个脚本。而这个脚本做的事情也非常简单，就是随机将浏览器重定向到一个新的页面，而浏览器访问新的页面时会触发自动回帖的操作。
+
+这也是我最终选择的方案。其优点在于：
+- 只依赖本机环境，只要本机浏览器登录了网站，控制好顶帖频率，那么脚本几乎不太可能会触发豆瓣的验证码
+- 和后端脚本不一样，此方案触发的 HTTP 请求在豆瓣服务端看来，看手工回帖触发的 HTTP 请求是没有区别的，因此应该不会导致因账号不当使用而被封
 
 *** 类浏览器测试工具
 
