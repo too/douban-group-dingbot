@@ -351,9 +351,38 @@ end
 - 只依赖本机环境，只要本机浏览器登录了网站，控制好顶帖频率，那么脚本几乎不太可能会触发豆瓣的验证码
 - 和后端脚本不一样，此方案触发的 HTTP 请求在豆瓣服务端看来，看手工回帖触发的 HTTP 请求是没有区别的，因此应该不会导致因账号不当使用而被封
 
-*** 类浏览器测试工具
+*** 其他方案
 
-*** 自动化图像识别操作
+除了以上，我还想到两套方案，限于时间，没有实践，写下思路备忘。
+
+**** 类浏览器测试工具
+
+在前端开发中，经常其实对前端页面进行一些测试，简单的测试可以靠手工肉眼点击按钮观察结果来进行，项目上了规模，成百上千个测试用例，全靠人工点鼠标，极易出错，既不可能亦无必要实施。
+
+好在前端界有一些工具，可以通过程序控制的手段模拟人工操作，来实现自动化的测试。这方面的工具我知道的有两个：
+
+- [[http://www.seleniumhq.org/download/][Selinium]] 功能强大，需要一个完整的图形界面
+- [[http://phantomjs.org/][PhantomJS]] 不需要图形界面，可以在服务器上远行
+
+其原理也是在开源浏览器的内核（比如 Webkit）上做一层包装，然后通过浏览器的 JavaScript 来操控，进而完成对浏览器的模拟。
+
+我觉得用这两个工具也有可能会碰到每次自动回帖都需要重新登录豆瓣进而触发豆瓣验证码。纯属猜测，还望指教。
+
+**** 自动化图像识别
+
+以上四种多多少少都属于要写“传统”的程序的方案，其实浏览器相关的自动化操作还有一个软件可以考虑：[[http://www.sikuli.org/][Sikuli]]。
+
+引用官网介绍：
+
+#+BEGIN_QUOTE
+Sikuli automates anything you see on the screen. It uses image recognition to identify and control GUI components. It is useful when there is no easy access to a GUI's internal or source code.
+
+-- http://www.sikuli.org/
+#+END_QUOTE
+
+我个人认为 Sikuli 是一个非常有前途的程序，它的威力还远没有被大众所认知。
+
+BTW，Sikuli 的发明人，[[http://vgod.tw/][vgod]]，台湾人，MIT PHD，是个非常厉害的程序员。
 
 ** 使用
 
