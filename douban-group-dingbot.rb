@@ -20,6 +20,10 @@ def main
 
   rand_url = urls[rand(urls.length)]
 
+  sleep_seconds = rand(1000)
+  puts "Sleep #{sleep_seconds} for a while."
+  sleep(sleep_seconds)
+
   case RUBY_PLATFORM
   when /darwin/
     `open #{rand_url}`
