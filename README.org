@@ -13,7 +13,116 @@
 
 ** 缘起
 
+最近在做自己的小产品，[[http://ppresume.com][PPResume]]，虽说酒香不怕巷子深，但是商业产品，总会面临一个冷启动的问题，因此会尝试一些初级的推广手段。于是就在豆瓣上各种求职招聘的小组里发了十几个帖子。
+
+[[/static/ppresume-douban-group-posts.jpg]]
+
+总体上讲，豆瓣的小组发帖审核并不是很严格，很多小组管理上比较荒芜，但是人气还是有一些，所以多少也可以算是一个免费的广告渠道吧。加上我穷，目前还用不起太贵的付费广告推广渠道，因此前几天就靠着手工顶帖的手段，来获取一些人气。
+
+但是顶帖实际上是个很无聊的事情，无非就是开浏览器窗口输入一些简单文字点击下提交。顶得频率过高还会遭遇豆瓣的验证码，还要手工输入，神烦。每天要耗十几分钟在这种无聊的事情上是很要命的。所以我就“心生邪念”，写了这个顶帖机器人。
+
+是谁说过，“懒惰是程序员的第一美德”。
+
 ** 实现
+
+自动顶帖的实现原理其实非常简单。从用户的角度来说，就是用程序来自动化完全以下的流程：
+- 打开一个浏览器窗口
+- 随机访问一个豆瓣小组话题
+- 在页面底部的表单输入区域输入一些文字
+- 点击提交按钮。
+
+如果你懂一些计算机知识，你会明白，整个过程无非就是自动化地向豆瓣发送一些 HTTP 请求。
+
+具体的程序实现可以有多种方式。分别列述于下。
+
+*** 后端脚本
+
+稍懂一些计算机知识的就知道，发帖就个行为多数情况下是一个 HTTP [[https://en.wikipedia.org/wiki/POST_(HTTP)][Post]] 请求。通过分析豆瓣的 Post 请求细节，即可写程序模拟，这是整个实现的核心。
+
+通过分析豆瓣页面的源码，并用 [[https://developer.chrome.com/devtools][Chrome Developer Tools]] 分析 HTTP 请求包，实现简单的后端脚本程序是不难的。
+
+豆瓣小组话题的提交表单核心 HTML 代码如下：
+
+#+BEGIN_SRC html
+<form name="comment_form" method="post" action="add_comment#last"
+      onsubmit="this.onsubmit=function(){return false}">
+  <div style="display:none;">
+    <input type="hidden" name="ck" value="uSni">
+  </div>
+  <textarea id="last" name="rv_comment" rows="8" cols="54"></textarea><br>
+  <input type="hidden" name="start" value="0">
+  <span class="bn-flat-hot rr">
+    <input name="submit_btn" type="submit" value="加上去">
+  </span>
+</form>
+#+END_SRC
+
+用后端脚本实现需要面临的问题是：
+- 在模拟发帖前需要登录，并保持 session
+- 由于后端脚本发送 HTTP 请求，User-Agent 默认情况下和浏览器是不一样的，很容易被豆瓣服务端识别并封禁，因此需要伪造 User-Agent
+- 除此之外，还需要仔细分析浏览器的实际 HTTP 请求，并在后端请求中加入合适的 HTTP Headers，尽可能模拟浏览器
+- 不像前端 DOM，后端脚本在解析 HTML 方面并不像浏览器内置的 JavaScript 那么方便，我的方式是通过正则匹配提取相应的信息。但是正则表达式其实是个用起来很爽但是调试起来很痛苦的一个工具。各种语言的正则实现多少都会有一些或是写法或是实现上的细节差别，很让人头疼，需要仔细调试。
+
+上面的都是小问题，最大的问题还是验证码的问题。因此后端脚本在每次运行后就会退出，因此每次运行时都需要重新登录并建立新的 HTTP session，这很容易触发豆瓣登录的验证码。而验证码识别需要 Computer Vision 领域相关的知识，这方面我所知甚少。[[https://t-y.me/p/233][这里]]和[[https://t-y.me/p/247][这里]]是两篇很好的文章，详细阐述了豆瓣验证码的程序化识别方法。我看了下，不是很难，个人花些时间的话，也可以完成。但是用 Computer Vision 的手段来“顶帖”，还是有些牛刀杀鸡之感，因此最终放弃了这个思路。
+
+附上我最开始写的 Python 程序，包含豆瓣登录、建立 HTTP session、用正则表达式提取一些表单信息。
+
+#+BEGIN_SRC python
+import random
+import re
+
+import requests
+
+def main():
+    urls = ["https://www.douban.com/group/topic/90845242/",
+            "https://www.douban.com/group/topic/90845094/",
+            "https://www.douban.com/group/topic/90845036/",
+            "https://www.douban.com/group/topic/90844973/",
+            "https://www.douban.com/group/topic/90844873/",
+            "https://www.douban.com/group/topic/90844341/",
+            "https://www.douban.com/group/topic/90844012/",
+            "https://www.douban.com/group/topic/90841110/",
+            "https://www.douban.com/group/topic/90840593/",
+            "https://www.douban.com/group/topic/90840457/",
+            "https://www.douban.com/group/topic/90840401/",
+            "https://www.douban.com/group/topic/90840340/",
+            "https://www.douban.com/group/topic/90840228/",
+            "https://www.douban.com/group/topic/90840096/",
+            "https://www.douban.com/group/topic/90839736/",
+            "https://www.douban.com/group/topic/90839654/"]
+
+    words = ['喵', '汪', '嗷', '咩', '哞', '呱',
+             '吱', '喔', '叽', '嗡', '咿', '嘶',
+             '喳', '嘎', '咕', '哇', '呜', '嗥']
+
+    random_word = words[random.randint(0, len(words) - 1)]
+
+    s = requests.session()
+    login_form_data = {'form_email': 'xiaohanyu1988@gmail.com',
+                       'form_password': 'some_password'}
+    s.post('https://www.douban.com/accounts/login', login_form_data)
+
+    get_url = urls[random.randint(0, len(urls) - 1)]
+    post_url = get_url + 'add_comment'
+    html = s.get(get_url)
+
+    m = re.match(r"<form name=\"comment_form\".*<input type=\"hidden\" name=\"(.*)\" value=\"(.*)\"", html.text)  # NOQA
+    name = m.group(1)
+    value = m.group(2)
+    # ...
+
+if __name__ == '__main__':
+    main()
+#+END_SRC
+
+
+*** 前端 iframe
+
+*** 前端浏览器插件
+
+*** 类浏览器测试工具
+
+*** 自动化图像识别操作
 
 ** 使用
 
