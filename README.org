@@ -35,7 +35,7 @@
 
 如果你懂一些计算机知识，你会明白，整个过程无非就是自动化地向豆瓣发送一些 HTTP 请求。
 
-具体的程序实现可以有多种方式。分别列述于下。
+具体的程序实现可以有多种方式。列述于下。
 
 *** 后端脚本
 
@@ -117,7 +117,6 @@ if __name__ == '__main__':
     main()
 #+END_SRC
 
-
 *** 前端 iframe
 
 第二种方式是通过前端页面嵌入 ~iframe~ ，然后通过 JavaScipt 修改 ~iframe src~ 来实现自动加载不同的页面。
@@ -173,7 +172,7 @@ if __name__ == '__main__':
 </html>
 #+END_SRC
 
-但是程序写到后面我发现我犯了了致命的错误……
+但是程序写到后面我发现我犯了致命的错误……
 
 我最初的想法是通过 ~iframe~ 加载豆瓣的页面后，通过 JavaScript 来获取 ~iframe~ 内部豆瓣页面上的元素，并进行模拟人工的发帖操作。
 
@@ -181,7 +180,7 @@ if __name__ == '__main__':
 
 *** 前端浏览器插件
 
-前两种方法基本上都宣告失败，此时我已经耗了大半天的时间，本已想放弃。灵光突现，忽然想起很久很久很久以前 Firefox 3.x 时候有个备受推崇的插件：[[https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/][Greasemonkey]]。可惜我当时对计算机程序所知甚少，完全不懂 Web/HTTP/HTML/JavaScript，因此只是简单看了下这个插件，就没有再关注过了。
+前两种方法基本上都宣告失败，此时我已经耗了大半天的时间，本已想放弃。灵光突现，忽然想起很久很久很久以前 Firefox 3.x 时代有个备受推崇的插件：[[https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/][Greasemonkey]]。可惜我当时对计算机程序所知甚少，完全不懂 Web/HTTP/HTML/JavaScript，因此只是简单看了下这个插件，就没有再关注过了。
 
 这次忽然想起，很多浏览器的插件其实也就是一些 JavaScript 脚本，而 Greasemonkey 其实就是个用户端可以自定义的 JavaScript 脚本管理器。通过 Greasemonkey 加上一些自定义脚本，用户几乎可以在客户端对页面做任何事情：
 - 屏蔽网站广告
@@ -254,9 +253,9 @@ Greasemonkey 在 Chrome 浏览器中对应的插件是 [[https://tampermonkey.ne
   - 此行表示授权脚本关闭浏览器窗口或者标签的权力 ~window.close()~ ，这样程序在完成顶帖工作后，可以自行关闭窗口，不会对用户的日常工作有太大的干扰。
 
 整个程序核心只有约 30 行左右，非常简单，逻辑也不复杂，除了回帖功能，程序中还加了一些额外的检测：
-- 根据话题的 title 是否包含特定字条，来确定此话题是否需要顶帖
+- 根据话题的 title 是否包含特定字符串，来确定此话题是否需要顶帖
 - 根据页面结构判断此话题是否刚刚被顶过
-- 判断页面是否包含验证码，如包含验证码，则直接退出。
+- 判断页面是否包含验证码，如包含验证码，则直接退出
 
 这样写完之后，将脚本安装到 Tampermonkey，然后每次访问特定的豆瓣小组话题页面时，就会触发自动回帖操作。当然，频率不要太高，要不会触发豆瓣的验证码。剩下的问题是，如何让浏览器来定时访问特定的豆瓣页面。
 
@@ -302,7 +301,7 @@ if __FILE__ == $0
 end
 #+END_SRC
 
-我的 crontab 设置是 ~52 8-23 * * * /usr/bin/ruby /Users/xiao/work/xiaohanyu/douban-group-dingbot/douban-group-dingbot.rb~ ，这表示在每天 8:00--23:00，每个小时第 52 分钟的时候，运行 ruby 脚本。实际上，我的 ruby 脚本中还加入了一些随机化的 ~sleep~ ，因此实际的回帖时间并不是每个小时的第 52 分钟，而是随机性的。这样可以更好地避开豆瓣的验证码限制，真正的 Behave like a human。
+我的 crontab 设置是 ~52 8-23 * * * /usr/bin/ruby /Users/xiao/work/xiaohanyu/douban-group-dingbot/douban-group-dingbot.rb~ ，这表示在每天 8:00--23:00，每个小时第 52 分钟的时候，运行 ruby 脚本。实际上，我的 ruby 脚本中还加入了一些随机化的 ~sleep~ ，因此实际的回帖时间并不是每个小时的第 52 分钟，而是随机性的。这样可以更好地避开豆瓣的验证码限制，真正的 behave like a human。
 
 除了用定时任务定时触发，还可以通过 Tampermonkey 进行手工触发。脚本如下：
 
