@@ -425,6 +425,10 @@ BTW，Sikuli 的发明人，[[http://vgod.tw/][vgod]]，台湾人，MIT PHD，�
 
 以此为记。
 
+** License
+
+MIT. Copyright (c) 2016 by Xiao Hanyu.
+
 # Local Variables:
 # eval: (auto-fill-mode -1)
 # End:
