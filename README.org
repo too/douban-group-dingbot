@@ -362,7 +362,7 @@ end
 
 好在前端界有一些工具，可以通过程序控制的手段模拟人工操作，来实现自动化的测试。这方面的工具我知道的有两个：
 
-- [[http://www.seleniumhq.org/download/][Selinium]] 功能强大，需要一个完整的图形界面
+- [[http://www.seleniumhq.org/download/][Selenium]] 功能强大，需要一个完整的图形界面
 - [[http://phantomjs.org/][PhantomJS]] 不需要图形界面，可以在服务器上远行
 
 其原理也是在开源浏览器的内核（比如 Webkit）上做一层包装，然后通过浏览器的 JavaScript 来操控，进而完成对浏览器的模拟。
