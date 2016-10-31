@@ -32,7 +32,8 @@
               "https://www.douban.com/group/topic/90840228/",
               "https://www.douban.com/group/topic/90840096/",
               "https://www.douban.com/group/topic/90839736/",
-              "https://www.douban.com/group/topic/90839654/"];
+              "https://www.douban.com/group/topic/90839654/",
+              "https://www.douban.com/group/topic/90839557/"];
 
   window.location.href = urls[random_int(0, urls.length)];
 })();
