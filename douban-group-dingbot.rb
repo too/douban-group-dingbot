@@ -93,7 +93,7 @@ def main
     when /darwin/
       `open #{rand_url}`
     when /linux/
-      `xdg-open #{rand_url}`
+      `DISPLAY=:0 xdg-open #{rand_url}`
     end
   end
 end
