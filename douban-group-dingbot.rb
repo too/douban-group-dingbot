@@ -83,8 +83,8 @@ def main
   urls = doctor_urls.map { |url| [url[:url]] * url[:frequency] }.flatten
 
 
-  3.times do
-    sleep_seconds = rand(1500)
+  2.times do
+    sleep_seconds = rand(1800)
     rand_url = urls[rand(urls.length)]
     puts "Sleep #{sleep_seconds} for a while."
     sleep(sleep_seconds)
