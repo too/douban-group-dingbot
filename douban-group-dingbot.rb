@@ -83,14 +83,16 @@ def main
   2.times do
     sleep_seconds = rand(1800)
     rand_url = urls[rand(urls.length)]
+    pagination = "?start=#{rand(10) * 100}"
+    url = rand_url + pagination
     puts "Sleep #{sleep_seconds} for a while."
     sleep(sleep_seconds)
 
     case RUBY_PLATFORM
     when /darwin/
-      `open #{rand_url}`
+      `open #{url}`
     when /linux/
-      `DISPLAY=:0 xdg-open #{rand_url}`
+      `DISPLAY=:0 xdg-open #{url}`
     end
   end
 end
