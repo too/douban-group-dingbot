@@ -395,6 +395,12 @@ BTW，Sikuli 的发明人，[[http://vgod.tw/][vgod]]，台湾人，MIT PHD，�
 #+NAME: image:douban-group-dingbot-result
 [[/images/douban-group-dingbot-result.png]]
 
+*** 技巧
+
+- 可以在 [[https://github.com/xiaohanyu/douban-group-dingbot/blob/master/douban-group-dingbot.js#L20][这里]] 配置顶帖时是否需要按主题过滤，从而进行无差别顶帖。
+
+- [[https://github.com/xiaohanyu/douban-group-dingbot/blob/master/douban-group-dingbot.rb#L4-L78][Ruby 脚本]] 中加入了一些 ~frequency~ 的配置， ~frequency~ 值越大，这个帖子被顶的概率也会越高。
+
 ** 后记
 
 2016 年 9 月 12 日中秋佳节，阿里巴巴几位程序员因为写脚本抢月饼触发系统 bug 导致多抢了几盒被公司以违反价值观为由开除（也有说是劝退）。
@@ -424,10 +430,6 @@ BTW，Sikuli 的发明人，[[http://vgod.tw/][vgod]]，台湾人，MIT PHD，�
 用机器代替人工，是刻在程序员骨子里的工作和生活方式。
 
 以此为记。
-
-** License
-
-MIT. Copyright (c) 2016 by Xiao Hanyu.
 
 # Local Variables:
 # eval: (auto-fill-mode -1)

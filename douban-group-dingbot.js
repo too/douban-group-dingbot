@@ -17,13 +17,16 @@
     return Math.floor(Math.random() * (max - min)) + min;
   }
 
+  var filter_by_topic = true;   // whether or not to filter post by topic
   var topic = 'PPResume';
   var title = document.getElementsByTagName('h1')[0].textContent;
   var is_ppresume_topic = (title.toUpperCase().indexOf(topic.toUpperCase()) == -1 ? false : true);
 
-  if (! is_ppresume_topic) {
-    console.log("This is not a " + topic + " topic, you've made a wrong choice, my master...");
-    return;
+  if (filter_by_topic) {
+    if (! is_ppresume_topic) {
+      console.log("This is not a " + topic + " topic, you've made a wrong choice, my master...");
+      return;
+    }
   }
 
   var words = ['喵', '汪', '嗷', '咩', '哞', '呱',
